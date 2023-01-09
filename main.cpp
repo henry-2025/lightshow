@@ -1,12 +1,23 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <avr/delay.h>
-volatile uint8_t updating = 0;
-volatile float delta, step;
-uint8_t rgb_start[3] = {0, 0, 0};
-uint8_t rgb_target[3] = {255, 0, 255};
 
-// #define NORMALIZE
+#define NORMALIZE // whether or not to apply exponential normalization to the PWM signals. Should use for production but disable if you want faster prototype uploads while developing 
+
+volatile uint8_t updating;
+uint8_t rgb_current[3];
+uint8_t rgb_target[3];
+
+
+// xorshift for RNG
+uint32_t xorshift32(uint32_t x) {
+    x ^= x << 13;
+    x ^= x << 17;
+    x ^= x << 5;
+    return x;
+}
+
+void rand_shift()
+
 
 void setup_pwm()
 {
@@ -37,7 +48,8 @@ void set_three_channel_duty(uint8_t r, uint8_t g, uint8_t b)
     OCR1A = b;
 }
 
-#ifdef NORMALIZE // just for faster upload since we have to use math lib
+
+#ifdef NORMALIZE
 #include <math.h>
 
 inline uint8_t normalize(uint8_t c)
@@ -45,24 +57,24 @@ inline uint8_t normalize(uint8_t c)
     return exp(c * 0.021745) - 1;
 }
 
-void rgb(uint8_t r, uint8_t g, uint8_t b)
+void rgb(uint8_t rgb[3])
 {
-    set_three_channel_duty(normalize(r), normalize(g), normalize(b));
+    set_three_channel_duty(normalize(rgb[0]), normalize(rgb[1]), normalize(rgb[2]));
 }
 
 #else
 
-void rgb(uint8_t r, uint8_t g, uint8_t b)
+void rgb(uint8_t rgb[3])
 {
-    set_three_channel_duty(r, g, b);
+    set_three_channel_duty(rgb[0], rgb[1], rgb[2]);
 }
 #endif
 
 void setup_timer()
 {
     TCCR2A |= (1 << WGM21);
-    TCCR2B |= (1 << CS21);
-    OCR2A = 100; // set the 8-bit timer to run at 1250Hz
+    TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);
+    OCR2A = 28; // set the 8-bit timer to run at 48Hz
     TIMSK2 |= (1 << OCIE2A);
 }
 
@@ -85,38 +97,46 @@ void iter()
     //     }
     //     update_state();
     // }
-
-    uint8_t rgb_current[3];
-
-    for (int i = 0; i < 3; i++)
+    if (updating)
     {
-        rgb_current[i] = (rgb_target[i] - rgb_start[i]) * step + rgb_start[i];
-    }
-
-    rgb(rgb_current[0], rgb_current[1], rgb_current[2]);
-    if ((step += 1 / (delta * 255)) > 1)
-    {
-        step = 0;
+        updating = 0;
+        for (int i = 0; i < 3; i++)
+        {
+            if (rgb_current[i] > rgb_target[i])
+            {
+                rgb_current[i]--;
+                updating = 1;
+            }
+            else if (rgb_current[i] < rgb_target[i])
+            {
+                rgb_current[i]++;
+                updating = 1;
+            }
+        }
+        rgb(rgb_current);
     }
 }
 
-int counter = 0;
-
 int main(void)
 {
-    DDRB |= (1 << DDB1);
     setup_timer();
+    setup_pwm();
+    rgb_current[0] = 0;
+    rgb_current[1] = 0;
+    rgb_current[2] = 0;
+
+    rgb_target[0] = 255;
+    rgb_target[1] = 0;
+    rgb_target[2] = 0;
+    updating = 1;
     sei();
-    while (1);
+    while (1)
+        ;
 }
 
 ISR(TIMER2_COMPA_vect)
 {
     cli();
-    if (++counter > 1250)
-    {
-        counter = 0;
-        PORTB ^= (1 << PORTB1);
-    }
+    iter();
     sei();
 }
