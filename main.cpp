@@ -3,9 +3,10 @@
 
 #define NORMALIZE // whether or not to apply exponential normalization to the PWM signals. Should use for production but disable if you want faster prototype uploads while developing 
 
-volatile uint8_t updating;
+volatile bool updating = 0;
 uint8_t rgb_current[3];
 uint8_t rgb_target[3];
+uint32_t shift_enc = 2447869310;
 
 
 // xorshift for RNG
@@ -16,9 +17,16 @@ uint32_t xorshift32(uint32_t x) {
     return x;
 }
 
-void rand_shift()
-
-
+// use xorshift to compute random rgb values
+void rand_shift() {
+    for(int i = 0; i < 3; i++) {
+        rgb_current[i] = rgb_target[i];
+    }
+    shift_enc = xorshift32(shift_enc);
+    for(int i = 0; i < 3; i++) {
+        rgb_target[i] = shift_enc >> (i*8);
+    }
+}
 void setup_pwm()
 {
     // pins are PB1 (OC1A) (blue), PD5 (OC0B) (green) and PD6 (OC0A) (red). figure out the relevant order next
@@ -73,8 +81,8 @@ void rgb(uint8_t rgb[3])
 void setup_timer()
 {
     TCCR2A |= (1 << WGM21);
-    TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);
-    OCR2A = 28; // set the 8-bit timer to run at 48Hz
+    TCCR2B |= (1 << CS22) | (1 << CS21);
+    OCR2A = 100; // set the 8-bit timer to run at 48Hz
     TIMSK2 |= (1 << OCIE2A);
 }
 
@@ -114,6 +122,9 @@ void iter()
             }
         }
         rgb(rgb_current);
+    } else {
+        rand_shift();
+        updating = 1;
     }
 }
 
@@ -121,14 +132,7 @@ int main(void)
 {
     setup_timer();
     setup_pwm();
-    rgb_current[0] = 0;
-    rgb_current[1] = 0;
-    rgb_current[2] = 0;
-
-    rgb_target[0] = 255;
-    rgb_target[1] = 0;
-    rgb_target[2] = 0;
-    updating = 1;
+    updating = 0;
     sei();
     while (1)
         ;
