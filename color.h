@@ -14,6 +14,13 @@ struct HSV {
     uint8_t v;
 };
 
+struct State {
+    int mode;
+    RGB rgb;
+    HSV hsv;
+    bool updating;
+};
+
 #define NORMALIZE // whether or not to apply exponential normalization to the PWM signals. Should use for production but disable if you want faster prototype uploads while developing 
 void rgb(RGB);
 void hsv(HSV);

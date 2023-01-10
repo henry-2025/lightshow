@@ -3,64 +3,63 @@
 #include "xorshift32.h"
 #include "fast_hsv2rgb.h"
 #include "color.h"
+#include "control.h"
 #include <stdlib.h>
 #include <avr/io.h>
 
-extern bool updating;
-extern int mode;
-extern HSV hsv_current;
-extern RGB rgb_current, rgb_target;
-extern uint8_t r;
-
-#define NUM_MODES 4 // the modes are
+extern int light_mode;
+extern State s_current, s_next;
 
 void random_sweep()
 {
-    if (updating)
+    if (s_current.updating)
     {
-        updating = 0;
-        int tmp = (rgb_current.r < rgb_target.r) - (rgb_current.r > rgb_target.r);
-        rgb_current.r += tmp;
-        updating |= tmp;
+        s_current.updating = 0;
+        int tmp = (s_current.rgb.r < s_next.rgb.r) - (s_current.rgb.r > s_next.rgb.r);
+        s_current.rgb.r += tmp;
+        s_current.updating |= tmp;
 
-        tmp = (rgb_current.g < rgb_target.g) - (rgb_current.g > rgb_target.g);
-        rgb_current.g += tmp;
-        updating |= tmp;
+        tmp = (s_current.rgb.g < s_next.rgb.g) - (s_current.rgb.g > s_next.rgb.g);
+        s_current.rgb.g += tmp;
+        s_current.updating |= tmp;
 
-        tmp = (rgb_current.b < rgb_target.b) - (rgb_current.b > rgb_target.b);
-        rgb_current.b += tmp;
-        updating |= tmp;
+        tmp = (s_current.rgb.b < s_next.rgb.b) - (s_current.rgb.b > s_next.rgb.b);
+        s_current.rgb.b += tmp;
+        s_current.updating |= tmp;
 
-        rgb(rgb_current);
+        rgb(s_current.rgb);
     }
     else
     {
         rand_shift();
-        updating = 1;
+        s_current.updating = 1;
     }
 }
 
-void hue_sweep()
+void hsv_sweep()
 {
-    if (++hsv_current.h == HSV_HUE_STEPS)
+
+    if (++s_current.hsv.h == HSV_HUE_STEPS)
     {
-        hsv_current.h = 0;
+        s_current.hsv.h = 0;
     }
-    hsv(hsv_current);
+    hsv(s_current.hsv);
 }
 
 void red()
 {
-    rgb(RGB{.r = r, .g = 0, .b = 0});
+    rgb(s_current.rgb);
 }
 
 void constant_color()
 {
+    hsv(s_current.hsv);
 }
 
-void (*update_funcs[NUM_MODES])() = {random_sweep, hue_sweep, red, constant_color};
+void (*update_funcs[NUM_MODES])() = {random_sweep, hsv_sweep, red, constant_color};
 
 void iter()
 {
-    update_funcs[mode]();
+    poll_button();
+    update_funcs[s_current.mode]();
 }

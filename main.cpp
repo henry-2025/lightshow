@@ -2,20 +2,18 @@
 #include "PWM.h"
 #include "timing.h"
 #include "color.h"
+#include "control.h"
 #include "xorshift32.h"
 
-bool updating = 0;
-int mode = 0;
-uint8_t r;
-HSV hsv_current;
-RGB rgb_current, rgb_target;
-uint32_t shift_enc = 0xbf9ebb52;
+State s_current, s_next;
+uint32_t shift_enc = 2447869310;
 
 int main(void)
 {
+    s_current.hsv = HSV {.h = 0, .s = 255, .v = 0};
     setup_timer();
     setup_pwm();
-    updating = 0;
+    setup_control();
     sei();
     while (1)
         ;
