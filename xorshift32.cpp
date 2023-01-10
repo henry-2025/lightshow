@@ -1,7 +1,14 @@
+#include "color.h"
+#include "xorshift32.h"
 #include <avr/io.h>
 
 extern uint32_t shift_enc;
-extern uint8_t rgb_current[3], rgb_target[3];
+extern HSV hsv_current, hsv_target;
+
+union HSV_32state {
+    HSV hsv;
+    uint32_t bits;
+};
 
 // RNG
 // xorshift for RNG
@@ -14,11 +21,9 @@ uint32_t xorshift32(uint32_t x) {
 
 // use xorshift to compute random rgb values
 void rand_shift() {
-    for(int i = 0; i < 3; i++) {
-        rgb_current[i] = rgb_target[i];
-    }
-    shift_enc = xorshift32(shift_enc);
-    for(int i = 0; i < 3; i++) {
-        rgb_target[i] = shift_enc >> (i*8);
-    }
+    HSV_32state s;
+    s.bits = xorshift32(shift_enc);
+    shift_enc = s.bits;
+    hsv_current = hsv_target;
+    hsv_target = s.hsv;
 }

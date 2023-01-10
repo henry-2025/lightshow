@@ -1,11 +1,16 @@
 #include <avr/io.h>
 #include "PWM.h"
 #include "timing.h"
+#include "color.h"
 
 bool updating = 0;
 int mode = 0;
-uint8_t rgb_current[3];
-uint8_t rgb_target[3];
+HSV hsv_current = {
+    0,
+    255,
+    255
+};
+HSV hsv_target;
 uint32_t shift_enc = 2447869310;
 
 int main(void)

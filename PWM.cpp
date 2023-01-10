@@ -1,6 +1,7 @@
 #include "PWM.h"
 #include <avr/io.h>
 
+
 void setup_pwm()
 {
     // pins are PB1 (OC1A) (blue), PD5 (OC0B) (green) and PD6 (OC0A) (red). figure out the relevant order next
@@ -23,34 +24,10 @@ void setup_pwm()
     OCR1A = 0;
 }
 
+
 void set_three_channel_duty(uint8_t r, uint8_t g, uint8_t b)
 {
     OCR0A = r;
     OCR0B = g;
     OCR1A = b;
-}
-
-#ifdef NORMALIZE
-#include <math.h>
-
-inline uint8_t normalize(uint8_t c)
-{
-    return exp(c * 0.021745) - 1;
-}
-
-void rgb(uint8_t rgb[3])
-{
-    set_three_channel_duty(normalize(rgb[0]), normalize(rgb[1]), normalize(rgb[2]));
-}
-
-#else
-
-void rgb(uint8_t rgb[3])
-{
-    set_three_channel_duty(rgb[0], rgb[1], rgb[2]);
-}
-#endif
-
-void hsb(uint8_t hsb[3]) {
-
 }

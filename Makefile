@@ -30,7 +30,7 @@ LFU = 0x62
 HFU = 0xD9
 EFU = 0xFF
 # program source files (not including external libraries)
-SRC = main.cpp modes.cpp PWM.cpp timing.cpp xorshift32.cpp
+SRC = main.cpp modes.cpp PWM.cpp timing.cpp xorshift32.cpp color.cpp fast_hsv2rgb_8bit.c
 # where to look for external libraries (consisting of .c/.cpp files and .h files)
 # e.g. EXT = ../../EyeToSee ../../YouSART
 EXT =
