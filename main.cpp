@@ -6,12 +6,13 @@
 
 bool updating = 0;
 int mode = 0;
+uint8_t r;
 HSV hsv_current;
-HSV_32state hsv_target;
+RGB rgb_current, rgb_target;
+uint32_t shift_enc = 0xbf9ebb52;
 
 int main(void)
 {
-    hsv_target.bits = 0x4b8c8132; // random seed
     setup_timer();
     setup_pwm();
     updating = 0;

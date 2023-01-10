@@ -7,9 +7,10 @@
 #include <avr/io.h>
 
 extern bool updating;
-extern HSV hsv_current;
-extern HSV hsv_target;
 extern int mode;
+extern HSV hsv_current;
+extern RGB rgb_current, rgb_target;
+extern uint8_t r;
 
 #define NUM_MODES 4 // the modes are
 
@@ -18,39 +19,39 @@ void random_sweep()
     if (updating)
     {
         updating = 0;
-        int sign;
-        sign = (hsv_current.s < hsv_target.s) - (hsv_current.s > hsv_target.s);
-        hsv_current.s += sign;
-        updating |= sign;
+        int tmp = (rgb_current.r < rgb_target.r) - (rgb_current.r > rgb_target.r);
+        rgb_current.r += tmp;
+        updating |= tmp;
 
-        sign = (hsv_current.v < hsv_target.v) - (hsv_current.v > hsv_target.v);
-        hsv_current.v += sign;
-        updating |= sign;
+        tmp = (rgb_current.g < rgb_target.g) - (rgb_current.g > rgb_target.g);
+        rgb_current.g += tmp;
+        updating |= tmp;
 
-        int diff = abs(hsv_current.h - hsv_target.h);
-        sign = (hsv_current.h < hsv_target.h) - (hsv_current.h > hsv_target.h);
-        sign *= ((diff <= HSV_HUE_STEPS / 2) - (diff > HSV_HUE_STEPS / 2));
-        if (sign > 0 && ++hsv_current.h == HSV_HUE_STEPS) {
-            hsv_current.h = 0;
-        } else if (sign < 0 && --hsv_current.h > HSV_HUE_STEPS) {
-            hsv_current.h = HSV_HUE_STEPS - 1;
-        }
-        updating |= sign;
-        hsv(hsv_current);
+        tmp = (rgb_current.b < rgb_target.b) - (rgb_current.b > rgb_target.b);
+        rgb_current.b += tmp;
+        updating |= tmp;
+
+        rgb(rgb_current);
     }
     else
     {
         rand_shift();
         updating = 1;
     }
-    hsv(hsv_current);
 }
+
 void hue_sweep()
 {
+    if (++hsv_current.h == HSV_HUE_STEPS)
+    {
+        hsv_current.h = 0;
+    }
+    hsv(hsv_current);
 }
 
 void red()
 {
+    rgb(RGB{.r = r, .g = 0, .b = 0});
 }
 
 void constant_color()

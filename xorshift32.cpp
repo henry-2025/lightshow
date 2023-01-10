@@ -3,8 +3,7 @@
 #include <avr/io.h>
 
 extern uint32_t shift_enc;
-extern HSV hsv_current;
-extern HSV_32state hsv_target;
+extern RGB rgb_current, rgb_target;
 
 // RNG
 // xorshift for RNG
@@ -17,6 +16,10 @@ uint32_t xorshift32(uint32_t x) {
 
 // use xorshift to compute random rgb values
 void rand_shift() {
-    hsv_current = hsv_target.hsv;
-    hsv_target.bits = xorshift32(hsv_target.bits);
+    rgb_current = rgb_target;
+    shift_enc = xorshift32(shift_enc);
+
+    rgb_target.r = shift_enc;
+    rgb_target.g = shift_enc >> 8;
+    rgb_target.b = shift_enc >> 16;
 }
