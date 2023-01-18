@@ -38,10 +38,10 @@ void button_down()
         switch (s_current.mode)
         {
         case MODE_RED:
-            s_current.rgb = RGB{.r = 100, .g = 0, .b = 0};
+            s_current.rgb = RGB{.r = 255, .g = 0, .b = 0};
             break;
         case MODE_HSV_SWEEP:
-            s_current.hsv = HSV{.h = 0, .s = 255, .v = 100};
+            s_current.hsv = HSV{.h = 0, .s = 255, .v = 255};
             break;
         default:
             break;

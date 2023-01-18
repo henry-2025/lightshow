@@ -56,7 +56,12 @@ void constant_color()
     hsv(s_current.hsv);
 }
 
-void (*update_funcs[NUM_MODES])() = {random_sweep, hsv_sweep, red, constant_color};
+void off()
+{
+    rgb(RGB {.r = 0, .g = 0, .b = 0});
+}
+
+void (*update_funcs[NUM_MODES])() = {random_sweep, hsv_sweep, red, constant_color, off};
 
 void iter()
 {
