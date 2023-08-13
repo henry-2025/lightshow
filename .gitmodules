@@ -1,3 +1,0 @@
-[submodule "reactive"]
-	path = reactive
-	url = git@github.com:henry-2025/audio-reactive-led-strip.git
